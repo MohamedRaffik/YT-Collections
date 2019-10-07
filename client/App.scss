@@ -8,9 +8,6 @@ html, body {
 nav { 
     background-color: darkred; 
     color: white;
-    position: sticky;
-    top: 0px;
-    z-index: 100;
 }
 
 .title {
@@ -56,6 +53,8 @@ nav {
         flex-direction: column;
 
         a {
+            text-decoration: none;
+            color: white;
             padding: 1em;
             border-top: #1f1f1f solid;
         }
@@ -84,6 +83,8 @@ nav {
         font-size: 1.1em;
         padding: 1em;
         cursor: pointer;
+        text-decoration: none;
+        color: white;
 
         &:hover { 
             background-color: darkred; 

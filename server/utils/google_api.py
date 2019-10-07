@@ -1,7 +1,11 @@
+from server.models.users import User
+from queue import Queue
+from threading import Thread
 from requests import get, post
 from urllib import parse
 from base64 import b64encode
 from os import getenv, urandom
+from time import sleep
 
 scopes = [
     'https://www.googleapis.com/auth/userinfo.email',
@@ -49,3 +53,91 @@ def create_credentials(oauth_response: dict) -> dict:
         'expires in': oauth_response['expires_in'],
         'scope': oauth_response['scope']
     }
+
+
+def build_collections(access_token: str, username: str):
+    subs, info = [], { 'nextPageToken': '' }
+    q = Queue()
+    threads = []
+
+    params = {
+        'part': 'snippet',
+        'mine': True,
+        'maxResults': 50,
+        'pageToken': info['nextPageToken']
+    }
+
+    while 'nextPageToken' in info:
+        info = get(
+            url='https://www.googleapis.com/youtube/v3/subscriptions',
+            headers={ 'Authorization': f'Bearer {access_token}' }, 
+            params={**params, 'pageToken': info['nextPageToken']}
+        ).json()
+        subs.append({ item['snippet']['resourceId']['channelId']: None for item in info['items'] }) 
+        threads.append( Thread(target=getTopics, args=(subs[-1].keys(), q)) )
+        threads[-1].start()
+
+    topic_map = {
+        '/m/04rlf': 'Music',
+        '/m/0bzvm2': 'Gaming',
+        '/m/06ntj': 'Sports',
+        '/m/02jjt': 'Entertainment',
+        '/m/019_rr': 'Lifestyle',
+        '/m/01k8wb': 'Knowledge',
+        '/m/098wr': 'Society'
+    }
+
+    collections = {
+        'Music': [ {} ],
+        'Gaming': [ {} ],
+        'Sports': [ {} ],
+        'Entertainment': [ {} ],
+        'Lifestyle': [ {} ],
+        'Knowledge': [ {} ],
+        'Society': [ {} ]
+    }
+
+    pages = {
+        'Music': 0,
+        'Gaming': 0,
+        'Sports': 0,
+        'Entertainment': 0,
+        'Lifestyle': 0,
+        'Knowledge': 0,
+        'Society': 0
+    }
+
+    for thread in threads:
+        thread.join()
+
+        info = q.get()
+
+        for item in info['items']:
+            if 'topicDetails' in item:
+                for topic in set(item['topicDetails']['topicIds']):
+                    if topic in topic_map:
+                        t = topic_map[topic]
+                        if len(collections[t][pages[t]]) == 50:
+                            collections[t].append({})
+                            pages[t] += 1
+                        collections[t][pages[t]][item['id']] = None   
+
+    user = User.get(username)
+    user.update( 
+        { 
+            'subscriptions': subs, 
+            'collections': collections,
+            'job_id': None 
+        } 
+    )
+    print('finished')
+
+def getTopics(subscriptions, q):
+    params = {
+        'part': 'topicDetails',
+        'id': ','.join(subscriptions),
+        'maxResults': '50',
+        'key': getenv('API_KEY'),
+    }
+
+    q.put(get('https://www.googleapis.com/youtube/v3/channels', params=params).json())

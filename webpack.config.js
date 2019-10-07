@@ -1,12 +1,11 @@
 const path = require('path');
 const HTMLWebpackPlugin = require('html-webpack-plugin');
 const MiniCSSExtractPlugin = require('mini-css-extract-plugin');
-const development = process.env.NODE_ENV === 'development';
 
 module.exports = {
     entry: './client/index.js',
     output: {
-        path: path.resolve(`client/${ development ? 'build' : 'dist' }`),
+        path: path.resolve('client/dist'),
         filename: 'main.js'
     },
     module: {

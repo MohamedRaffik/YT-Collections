@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Link, Switch } from 'react-router-dom';
 import './App.scss';
 import { Subscriptions } from './components';
 import YTLogo from './images/YouTube_full-color_icon_(2017).svg';
@@ -7,7 +8,7 @@ import Settings_Logo from './images/settings-32.ico'
 const NavOptions = (props) => {
     const { ShowAccount, LoginAction, UserName } = props;
     return [
-        <a key="subs">Subscriptions</a>,
+        <Link to='/subscriptions' key="subs">Subscriptions</Link>,
         <a key="colls">Collections</a>,
         <a key="playlists">Playlists</a>,
         <a key="vid">Video Player</a>,
@@ -80,14 +81,19 @@ const App = () => {
     }, []);
 
     return (
-        <div>
-            <nav>
-                <MobileNavBar Size={'small'} ShowDropdown={ShowNavMenu} SetDropdown={() => setShowNavMenu(!ShowNavMenu)} LoginAction={OAuthLogin} UserName={UserName} />
-                <MobileNavBar Size={'medium'} ShowDropdown={ShowNavMenu} SetDropdown={() => setShowNavMenu(!ShowNavMenu)} LoginAction={OAuthLogin} UserName={UserName} />
-                <NavBar LoginAction={OAuthLogin} UserName={UserName} />
-            </nav>
-            <Subscriptions />
-        </div>
+        <Router>
+            <div>
+                <nav>
+                    <MobileNavBar Size={'small'} ShowDropdown={ShowNavMenu} SetDropdown={() => setShowNavMenu(!ShowNavMenu)} LoginAction={OAuthLogin} UserName={UserName} />
+                    <MobileNavBar Size={'medium'} ShowDropdown={ShowNavMenu} SetDropdown={() => setShowNavMenu(!ShowNavMenu)} LoginAction={OAuthLogin} UserName={UserName} />
+                    <NavBar LoginAction={OAuthLogin} UserName={UserName} />
+                </nav>
+                <Switch>
+                    <Route path='/' component={Subscriptions}></Route>
+                    <Route path='/subscriptions' component={Subscriptions}></Route>
+                </Switch>
+            </div>
+        </Router>
     );
 };
 

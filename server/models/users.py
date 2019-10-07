@@ -1,23 +1,37 @@
+from server import  app
 from flask_login import UserMixin
-from server import db
+from flask_pymongo import PyMongo
+from google.cloud import firestore
+from os import getenv
+
+DEV_MODE = getenv('FLASK_ENV') == 'development'
+
+db = PyMongo(app, uri=getenv('DATABASE_URI')).db
 
 class User(UserMixin):
-    def __init__(self, _id, subscriptions, collections, credentials, last_updated):
+    def __init__(self, _id, subscriptions, collections, credentials, job_id, last_updated):
         self._id= _id
         self.subscriptions = subscriptions
         self.collections = collections
         self.credentials = credentials
+        self.job_id = job_id
         self.last_updated = last_updated
 
     def insert(self):
-        db.Users.insert_one(self.to_dict())
+        if DEV_MODE:
+            db.Users.insert_one(self.to_dict())
+        else:
+            db.collection('Users').document(self._id).set(self.to_dict())
 
     def update(self, new_attributes):
-        db.Users.update_one({'_id': self._id}, {'$set': new_attributes})
+        if DEV_MODE:
+            db.Users.update_one({'_id': self._id}, {'$set': new_attributes})
+        else:
+            db.collection('Users').document(self._id).update(new_attributes)
 
     @staticmethod
     def get(email):
-        user = db.Users.find_one({'_id': email})
+        user = db.Users.find_one({'_id': email}) if DEV_MODE else db.collection('Users').document(email).get().to_dict()
         if user:
             return User(**user)
         return None
@@ -28,6 +42,7 @@ class User(UserMixin):
             'subscriptions': self.subscriptions,
             'collections': self.collections,
             'credentials': self.credentials,
+            'job_id': self.job_id,
             'last_updated': self.last_updated
         }
 

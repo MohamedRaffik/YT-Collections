@@ -4,18 +4,22 @@
   "description": "",
   "main": "./client/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run client\" \"export FLASK_ENV=development; npm run server\" --kill-others-on-fail -c green,blue",
+    "dev": "concurrently \"npm run client\" \"export FLASK_ENV=development && npm run server\" --kill-others-on-fail -c green,blue",
     "prod": "npm run build && python app.py",
-    "client": "export NODE_ENV=development && webpack-dev-server --mode development --open --hot",
+    "client": "webpack-dev-server --mode development --open --hot",
     "server": "python app.py",
     "build": "webpack --mode production",
+    "worker": "export FLASK_ENV=development && python worker.py tasks",
+    "deploy": "npm run build && gcloud app deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "react": "^16.9.0",
-    "react-dom": "^16.9.0"
+    "react-dom": "^16.9.0",
+    "react-router": "^5.1.2",
+    "react-router-dom": "^5.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.6.0",

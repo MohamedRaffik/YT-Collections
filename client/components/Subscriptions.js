@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Subscriptions.scss';
 
 const Channel = () => {
@@ -17,6 +17,36 @@ const Channel = () => {
 }
 
 const Subscription = () => {
+    const [Subscriptions, setSubscriptions] = useState([]);
+    const [Page, setPage] = useState(0);
+    const [LoadNextPage, setLoadNextPage] = useState(true);
+    const [LoadingSubscriptions, setLoadingSubscriptions] = useState(true);
+
+    const getSubscriptions = (page) => {
+        if (!LoadNextPage) return;
+        fetch('/api/subscriptions/page/0')
+            .then(response => {
+                if (response.status === 202) {
+                    window.requestInterval = window.requestInterval ? window.requestInterval : setInterval(() => getSubscriptions(0), 5000);
+                    return;
+                }
+                response.json().then(data => {
+                    clearInterval(window.requestInterval);
+                    console.log(data);
+                    setLoadingSubscriptions(false);
+                    setSubscriptions(data.subscriptions);
+                    if (Page == data.total_pages) setLoadNextPage(false);
+                })
+                .catch(err => console.error(err));
+            })
+            .catch(err => console.error(err));
+    }
+
+    useEffect(() => { 
+        getSubscriptions(0);
+    }, []);
+    // useEffect(() => { if (Page != 0) getSubscriptions(Page) } , [Page])
+
     return (
         <div className="content">
             <div className="sub-search">
